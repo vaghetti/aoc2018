@@ -9,29 +9,47 @@ defmodule Day3 do
             end)
     end
 
-    def part1() do
-        size = 1005
-        initialMatrix = Enum.map(0..size-1, fn _ ->
-            Enum.map(0..size-1, fn _ -> 0 end)
-        end)
+    def getKey(x,y) do
+        Integer.to_string(y)<>" "<>Integer.to_string(x)
+    end
 
-        Enum.reduce(Enum.with_index(getList()), initialMatrix, fn {%{stX: stX, stY: stY, endX: endX , endY: endY}, claimID} , matrix ->
-            Enum.map(Enum.with_index(matrix), fn {line, yIndex} ->
-                Enum.map(Enum.with_index(line), fn {claimCount, xIndex} ->
-                    if xIndex >= stX and xIndex < endX and yIndex >= stY and yIndex < endY do
-                        claimCount + 1
-                    else
-                        claimCount
-                    end
-                end)
+    def getOverlapCount() do
+        Enum.reduce(Enum.with_index(getList()), %{}, fn {%{stX: stX, stY: stY, endX: endX , endY: endY}, _} , matrix ->
+            Enum.reduce(posPairs(stX, stY, endX, endY), matrix, fn {x,y}, matrix ->
+                key = getKey(x,y)
+                if matrix[key] do
+                    Map.put(matrix, key, matrix[key] + 1)
+                else
+                    Map.put(matrix, key,  1)
+                end
             end)
-        end) |>
+        end)
+    end
+
+    def part1() do
+        getOverlapCount() |>
+        Map.values() |>
         List.flatten() |>
         Enum.filter(fn x -> x >= 2 end) |>
         Enum.count()
     end
 
+    def posPairs(stX, stY, endX, endY) do
+        yRange = stY..endY-1
+        xRange = stX..endX-1
+        Enum.map(yRange, fn yPos ->
+            Enum.zip(xRange, Stream.cycle([yPos]))
+        end) |>
+        List.flatten()
+    end
+
     def part2() do
+        counts = getOverlapCount()
+
+        Enum.filter(Enum.with_index(getList(),1), fn {%{stX: stX, stY: stY, endX: endX , endY: endY}, _} ->
+            posPairs = posPairs(stX, stY, endX, endY)
+            Enum.all?(posPairs, fn {x,y} -> counts[getKey(x,y)] == 1 end)
+        end)
     end
 end
 
