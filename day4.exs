@@ -12,39 +12,39 @@ defmodule Day4 do
          year<>" "<>month<>" "<>day<>" "<>hour<>" "<>minute
     end
 
-    def part1() do
+    def timeSleptPerMinute() do
         input() |>
         Enum.sort( fn a,b -> a[:time] < b[:time] end) |>
-        Enum.reduce(%{currentID: 0, totalSleep: %{}, fallMinute: 0}, fn %{ eventOrID: eventOrID, minute: minute}, acc ->
-            %{currentID: currentID, totalSleep: totalSleep, fallMinute: fallMinute} = acc
+        Enum.reduce(%{currentID: 0, timeSleptPerMinute: %{}, fallMinute: 0}, fn %{eventOrID: eventOrID, minute: minute}, acc ->
+            %{currentID: currentID, timeSleptPerMinute: timeSleptPerMinute, fallMinute: fallMinute} = acc
             case eventOrID do
                 "falls" ->
                     Map.put(acc, :fallMinute, minute)
                 "wakes" ->
-                    mapEntry =
-                        if totalSleep[currentID] do
-                            sleepTime = minute - fallMinute + elem(totalSleep[currentID],0)
-                            asleepMinutes = Enum.reduce(fallMinute..(minute-1),  elem(totalSleep[currentID], 1), fn sleepingMinute, asleepMinutes ->
-                                List.replace_at(asleepMinutes, sleepingMinute, Enum.at(asleepMinutes, sleepingMinute) + 1)
+                    newTimeSleptPerMinute =
+                        if timeSleptPerMinute[currentID] do
+                            Enum.reduce(fallMinute..(minute-1),  timeSleptPerMinute[currentID], fn thisMinute, asleepMinutes ->
+                                List.replace_at(asleepMinutes, thisMinute, Enum.at(asleepMinutes, thisMinute) + 1)
                             end)
-                            {sleepTime, asleepMinutes, currentID}
                         else
-                            sleepTime = minute - fallMinute
-                            asleepMinutes = Enum.reduce(fallMinute..(minute-1),  Enum.map(0..59, fn _ -> 0 end), fn sleepingMinute, asleepMinutes ->
-                                #IO.inspect asleepMinutes
-                                List.replace_at(asleepMinutes, sleepingMinute, Enum.at(asleepMinutes, sleepingMinute) + 1)
+                            Enum.reduce(fallMinute..(minute-1),  Enum.map(0..59, fn _ -> 0 end), fn thisMinute, asleepMinutes ->
+                                List.replace_at(asleepMinutes, thisMinute, Enum.at(asleepMinutes, thisMinute) + 1)
                             end)
-                            {sleepTime, asleepMinutes, currentID}
                         end
-
-
-                    Map.put(acc, :totalSleep, Map.put(totalSleep, currentID, mapEntry))
+                    Map.put(acc, :timeSleptPerMinute, Map.put(timeSleptPerMinute, currentID, newTimeSleptPerMinute))
                 _ ->
                     Map.put(acc, :currentID, eventOrID)
             end
         end) |>
-        (fn x -> x[:totalSleep] end).() |>
-        Map.values() |>
+        Map.get(:timeSleptPerMinute)
+    end
+
+    def part1() do
+        timeSleptPerMinute() |>
+        Map.to_list() |>
+        Enum.map(fn {guardID ,sleepMinutes} ->
+            {Enum.sum(sleepMinutes), sleepMinutes, guardID}
+        end) |>
         Enum.max() |>
         (fn {_, sleepMinutes, guardID} ->
             mostSleptMinute =
@@ -52,11 +52,27 @@ defmodule Day4 do
                 Enum.with_index() |>
                 Enum.max() |>
                 elem(1)
-            IO.inspect mostSleptMinute
-            IO.inspect guardID
+            String.to_integer(guardID) * mostSleptMinute
+        end).()
+    end
+
+    def part2() do
+        timeSleptPerMinute() |>
+        Map.to_list() |>
+        Enum.map(fn {guardID ,sleepMinutes} ->
+            {Enum.max(sleepMinutes), sleepMinutes, guardID}
+        end) |>
+        Enum.max() |>
+        (fn {_, sleepMinutes, guardID} ->
+            mostSleptMinute =
+                sleepMinutes |>
+                Enum.with_index() |>
+                Enum.max() |>
+                elem(1)
             String.to_integer(guardID) * mostSleptMinute
         end).()
     end
 end
 
 IO.inspect Day4.part1()
+IO.inspect Day4.part2()
