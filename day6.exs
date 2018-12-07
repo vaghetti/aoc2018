@@ -4,12 +4,12 @@ defmodule Day6 do
         String.split("\n") |>
         Enum.map(fn line ->
             [x,y] = String.split(line, ",")
-            {String.to_integer(x),String.to_integer(y)}
+            {String.to_integer(x)+boxSize()/2,String.to_integer(y)+boxSize()/2}
         end)
     end
 
     def boxSize() do
-        350
+        1000
     end
 
     def posMap() do
@@ -99,6 +99,21 @@ defmodule Day6 do
         Map.values() |>
         Enum.max()
     end
+
+    def part2() do
+        safePosList = input()
+        Enum.reduce(positionList(),0, fn pos, closeCount ->
+            totalDistance = Enum.reduce(safePosList, 0, fn safePos, totalDistance ->
+                totalDistance + distance(safePos, pos)
+            end)
+            if totalDistance < 10000 do
+                closeCount + 1
+            else
+                closeCount
+            end
+        end)
+    end
 end
 
 IO.inspect Day6.part1()
+IO.inspect Day6.part2()
